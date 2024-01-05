@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include "pwm.h" // Biblioteca disponibilizada pela Toradex chamada PwmLib
+
+#define BASE_FREQ_VF50 66000000 // Frequencia de operacao da placa Colibri VF-50
+
+void main()
+{
+	// Configuracao do PWM
+
+	bool returnValue = FALSE;
+	int *pwmHandle = NULL; 
+
+	pwmHandle = Pwm_Init("PWM1"); // Inicializa o PWM1/PWM_A que de acordo com o datasheet da placa VIOLA do VF-50 é o pino 41 do extensor de conexões
+	if (pwmHandle == NULL) // Rotina de Teste do comando
+	{
+        	printf("Erro em Pwm_Init()\n");
+	}
+
+	returnValue = Pwm_SetConfigInt(pwmHandle, "BaseFreq", BASE_FREQ_VF50, StoreVolatile);
+	if(returnValue == FALSE)
+	{
+		printf("Erro em Pwm_SetConfigInt()\n");
+	}
+
+	// Configuracao dos GPIO's
+	
+	echo 135 > /sys/class/gpio/export; // Pino 8 do extensor de conexões
+	echo “out” > /sys/class/gpio/gpio135/direction;
+	echo 0 > /sys/class/gpio/gpio135/value;
+	
+	echo 98 > /sys/class/gpio/export; // Pino 9 do extensor de conexões
+	echo “out” > /sys/class/gpio/gpio98/direction;
+	echo 0 > /sys/class/gpio/gpio98/value;
+
+	// Declaracao de Varaveis
+	
+	int direction;
+	int dutyCicle;
+	int signalFreq;
+	int menu;
+
+	// Programa Principal
+	
+	while(menu != 1)
+{
+	// Aquisicao de Dados
+	
+	printf("\nFrequncia do Sinal de PWM: "); // Aquisicao da frequncia de PWM desejada
+	scanf("%d", &signalFreq);
+	while(signalFreq > BASE_FREQ_VF50) // Teste de compatibilidade, pois a frequancia deve ser menor que a frequencia de operacao do VF-50
+	{
+		printf("\nFrequancia do Sinal deve ser menor que 66000000 (66 Mhz): ");
+		scanf("%d", &signalFreq);
+	}
+
+	printf("\nSentido de Rotacao (0 - HORARIO / 1 - ANTIHORARIO): "); // Aquisicao da direcao
+	scanf("%d", &direction);
+
+	printf("\nVelocidade de Rotacao (1 - 100): "); // Aquisicao do duty cicle do pwm
+	scanf("%d", &dutyCicle);
+	dutyCicle = (int)dutyCicle*65536/100; // O valor que a funcao recebe deve ser convertido para o intervalo de um unsigned int de 2 bytes
+
+	// Processamento
+
+	if(direction) // Configurando a direcao
+	{
+		echo 0 > /sys/class/gpio/gpio135/value;
+		echo 1 > /sys/class/gpio/gpio98/value;
+	} else
+	{
+		echo 1 > /sys/class/gpio/gpio135/value;
+		echo 0 > /sys/class/gpio/gpio98/value;
+	}
+	
+	Pwm_SetPwm(pwmHandle, signalFreq, dutyCicle); // Configurando o PWM
+	
+	printf("\nPressione 0 para mudar as configuracoes de operacao ou pressione 1 para sair: ");
+	scanf("%d", menu);
+}
+	Pwm_Close(pwmHandle);
+	return 0;
+}
