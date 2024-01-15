@@ -10,7 +10,7 @@ void main()
 	bool returnValue = FALSE;
 	int *pwmHandle = NULL; 
 
-	pwmHandle = Pwm_Init("PWM1"); // Inicializa o PWM1/PWM_A que de acordo com o datasheet da placa VIOLA do VF-50 é o pino 41 do extensor de conexões
+	pwmHandle = Pwm_Init("PWM1"); // Inicializa o PWM1/PWM_A que de acordo com o datasheet da placa VIOLA do VF-50 Ã© o pino 41 do extensor de conexÃµes
 	if (pwmHandle == NULL) // Rotina de Teste do comando
 	{
         	printf("Erro em Pwm_Init()\n");
@@ -23,14 +23,35 @@ void main()
 	}
 
 	// Configuracao dos GPIO's
+
+	int pinHor
+	pinHor = open("/sys/class/gpio/export", O_WRONLY);
+	write(pinHor, "135", 3);
+	close(pinHor);
+	pinHor = open("/sys/class/gpio/gpio135/direction", O_WRONLY);
+	write(pinHor, "out", 3);
+	close(pinHor);
+	pinHor = open("/sys/class/gpio/gpio135/value", O_WRONLY | O_SYNC);
+	write(pinHor, "0", 1);
 	
-	echo 135 > /sys/class/gpio/export; // Pino 8 do extensor de conexões
-	echo “out” > /sys/class/gpio/gpio135/direction;
-	echo 0 > /sys/class/gpio/gpio135/value;
-	
-	echo 98 > /sys/class/gpio/export; // Pino 9 do extensor de conexões
-	echo “out” > /sys/class/gpio/gpio98/direction;
-	echo 0 > /sys/class/gpio/gpio98/value;
+	//echo 135 > /sys/class/gpio/export; // Pino 8 do extensor de conexÃµes
+	//echo â€œoutâ€ > /sys/class/gpio/gpio135/direction;
+	//echo 0 > /sys/class/gpio/gpio135/value;
+
+
+	int pinAnt
+	pinAnt = open("/sys/class/gpio/export", O_WRONLY);
+	write(pinHor, "98", 2);
+	close(pinHor);
+	pinAnt = open("/sys/class/gpio/gpio98/direction", O_WRONLY);
+	write(pinHor, "out", 3);
+	close(pinHor);
+	pinAnt = open("/sys/class/gpio/gpio98/value", O_WRONLY | O_SYNC);
+	write(pinHor, "0", 1);
+
+	//echo 98 > /sys/class/gpio/export; // Pino 9 do extensor de conexÃµes
+	//echo â€œoutâ€ > /sys/class/gpio/gpio98/direction;
+	//echo 0 > /sys/class/gpio/gpio98/value;
 
 	// Declaracao de Varaveis
 	
@@ -64,10 +85,14 @@ void main()
 
 	if(direction) // Configurando a direcao
 	{
-		echo 0 > /sys/class/gpio/gpio135/value;
-		echo 1 > /sys/class/gpio/gpio98/value;
+		write(pinHor, "0", 1);
+		write(pinAnt, "1", 1);
+		//echo 0 > /sys/class/gpio/gpio135/value;
+		//echo 1 > /sys/class/gpio/gpio98/value;
 	} else
 	{
+		write(pinHor, "1", 1);
+		write(pinAnt, "0", 1);
 		echo 1 > /sys/class/gpio/gpio135/value;
 		echo 0 > /sys/class/gpio/gpio98/value;
 	}
@@ -78,5 +103,7 @@ void main()
 	scanf("%d", menu);
 }
 	Pwm_Close(pwmHandle);
+	close(pinHor);
+	close(pinAnt);
 	return 0;
 }
